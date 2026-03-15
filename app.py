@@ -33,7 +33,7 @@ st.write("Dashboard Analisis dan Prediksi Kesehatan Mental Mahasiswa menggunakan
 # LOAD DATASET
 # ==========================================
 
-df = pd.read_csv("student-mental-health.csv")
+df = pd.read_csv("Student Mental health (1).csv")
 
 # Rename kolom
 df.rename(columns={
