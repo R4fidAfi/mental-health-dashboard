@@ -1,9 +1,10 @@
-# =====================================
+# ==========================================
 # STUDENT MENTAL HEALTH DASHBOARD
-# =====================================
+# ==========================================
 
 import streamlit as st
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -11,22 +12,30 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
+# ==========================================
+# PAGE CONFIG (AGAR TERLIHAT PROFESIONAL)
+# ==========================================
 
-# =====================================
-# Load Dataset
-# =====================================
+st.set_page_config(
+    page_title="Student Mental Health Dashboard",
+    page_icon="🧠",
+    layout="wide"
+)
 
-st.title("🎓 Student Mental Health Dashboard")
+# ==========================================
+# TITLE
+# ==========================================
 
-st.write("Dashboard Analisis dan Prediksi Kesehatan Mental Mahasiswa")
+st.title("🧠 Student Mental Health Dashboard")
+st.write("Dashboard Analisis dan Prediksi Kesehatan Mental Mahasiswa menggunakan Machine Learning")
 
-df = pd.read_csv("Student Mental health (1).csv")
+# ==========================================
+# LOAD DATASET
+# ==========================================
 
+df = pd.read_csv("student-mental-health.csv")
 
-# =====================================
-# Rename Kolom
-# =====================================
-
+# Rename kolom
 df.rename(columns={
     "Choose your gender": "gender",
     "Age": "age",
@@ -40,124 +49,175 @@ df.rename(columns={
     "Did you seek any specialist for a treatment?": "treatment"
 }, inplace=True)
 
+# Cleaning
 df = df.dropna()
 
-df['depression'] = df['depression'].map({'Yes':1, 'No':0})
-df['anxiety'] = df['anxiety'].map({'Yes':1, 'No':0})
-df['panic_attack'] = df['panic_attack'].map({'Yes':1, 'No':0})
+# Encoding
+df['depression'] = df['depression'].map({'Yes':1,'No':0})
+df['anxiety'] = df['anxiety'].map({'Yes':1,'No':0})
+df['panic_attack'] = df['panic_attack'].map({'Yes':1,'No':0})
+df['treatment'] = df['treatment'].map({'Yes':1,'No':0})
 
-
+# Feature engineering
 df["mental_health_score"] = df["depression"] + df["anxiety"] + df["panic_attack"]
 
+# ==========================================
+# SIDEBAR MENU
+# ==========================================
 
-# =====================================
-# Dashboard Dataset
-# =====================================
-
-st.header("📊 Dataset Overview")
-
-st.write("Jumlah Data:", df.shape)
-
-st.dataframe(df.head())
-
-
-# =====================================
-# Grafik Gender
-# =====================================
-
-st.subheader("Distribusi Gender")
-
-fig1, ax1 = plt.subplots()
-
-sns.countplot(x='gender', data=df, ax=ax1)
-
-st.pyplot(fig1)
-
-
-# =====================================
-# Grafik Depression
-# =====================================
-
-st.subheader("Mahasiswa Mengalami Depresi")
-
-fig2, ax2 = plt.subplots()
-
-sns.countplot(x='depression', data=df, ax=ax2)
-
-st.pyplot(fig2)
-
-
-# =====================================
-# Grafik Anxiety
-# =====================================
-
-st.subheader("Mahasiswa Mengalami Anxiety")
-
-fig3, ax3 = plt.subplots()
-
-sns.countplot(x='anxiety', data=df, ax=ax3)
-
-st.pyplot(fig3)
-
-
-# =====================================
-# Heatmap Korelasi
-# =====================================
-
-st.subheader("Heatmap Korelasi")
-
-fig4, ax4 = plt.subplots()
-
-sns.heatmap(df.corr(numeric_only=True), annot=True, ax=ax4)
-
-st.pyplot(fig4)
-
-
-# =====================================
-# Machine Learning
-# =====================================
-
-st.header("🤖 Machine Learning Model")
-
-X = df[['age','mental_health_score']]
-y = df['depression']
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42
+menu = st.sidebar.selectbox(
+    "Menu",
+    ["Dashboard Data","Visualisasi Data","Machine Learning","Prediksi"]
 )
 
-model = LogisticRegression()
+# ==========================================
+# DASHBOARD DATA
+# ==========================================
 
-model.fit(X_train, y_train)
+if menu == "Dashboard Data":
 
-y_pred = model.predict(X_test)
+    st.header("📊 Dataset Overview")
 
-accuracy = accuracy_score(y_test, y_pred)
+    st.write("Jumlah Data:", df.shape)
 
-st.write("Model Accuracy:", accuracy)
+    st.dataframe(df.head(10))
 
+    st.subheader("Statistik Dataset")
 
-# =====================================
-# Form Prediksi
-# =====================================
+    st.write(df.describe())
 
-st.header("🔮 Prediksi Depression Mahasiswa")
+# ==========================================
+# VISUALISASI DATA
+# ==========================================
 
-age = st.number_input("Umur Mahasiswa", 17, 40)
+elif menu == "Visualisasi Data":
 
-mental_score = st.slider("Mental Health Score", 0, 3)
+    st.header("📈 Visualisasi Data Mental Health")
 
-if st.button("Prediksi"):
+    col1, col2 = st.columns(2)
 
-    prediction = model.predict([[age, mental_score]])
+    with col1:
 
-    if prediction[0] == 1:
+        st.subheader("Distribusi Gender")
 
-        st.error("⚠️ Mahasiswa Berisiko Depression")
+        fig1, ax1 = plt.subplots()
 
-    else:
+        sns.countplot(x='gender', data=df, ax=ax1)
 
-        st.success("✅ Mahasiswa Tidak Depression")
+        st.pyplot(fig1)
+
+    with col2:
+
+        st.subheader("Mahasiswa Mengalami Depresi")
+
+        fig2, ax2 = plt.subplots()
+
+        sns.countplot(x='depression', data=df, ax=ax2)
+
+        st.pyplot(fig2)
+
+    col3, col4 = st.columns(2)
+
+    with col3:
+
+        st.subheader("Mahasiswa Mengalami Anxiety")
+
+        fig3, ax3 = plt.subplots()
+
+        sns.countplot(x='anxiety', data=df, ax=ax3)
+
+        st.pyplot(fig3)
+
+    with col4:
+
+        st.subheader("Mahasiswa Mengalami Panic Attack")
+
+        fig4, ax4 = plt.subplots()
+
+        sns.countplot(x='panic_attack', data=df, ax=ax4)
+
+        st.pyplot(fig4)
+
+    st.subheader("Heatmap Korelasi")
+
+    fig5, ax5 = plt.subplots(figsize=(8,6))
+
+    sns.heatmap(df.corr(numeric_only=True), annot=True, cmap="coolwarm", ax=ax5)
+
+    st.pyplot(fig5)
+
+# ==========================================
+# MACHINE LEARNING
+# ==========================================
+
+elif menu == "Machine Learning":
+
+    st.header("🤖 Machine Learning Model")
+
+    X = df[['age','mental_health_score']]
+    y = df['depression']
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42
+    )
+
+    model = LogisticRegression()
+
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+
+    st.subheader("Model Logistic Regression")
+
+    st.write("Model Accuracy:", round(accuracy*100,2), "%")
+
+# ==========================================
+# PREDIKSI
+# ==========================================
+
+elif menu == "Prediksi":
+
+    st.header("🔮 Prediksi Depression Mahasiswa")
+
+    X = df[['age','mental_health_score']]
+    y = df['depression']
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42
+    )
+
+    model = LogisticRegression()
+
+    model.fit(X_train, y_train)
+
+    age = st.number_input("Masukkan Umur Mahasiswa", 17, 40)
+
+    mental_score = st.slider("Mental Health Score", 0, 3)
+
+    if st.button("Prediksi"):
+
+        prediction = model.predict([[age, mental_score]])
+
+        if prediction[0] == 1:
+
+            st.error("⚠️ Mahasiswa Berisiko Mengalami Depression")
+
+        else:
+
+            st.success("✅ Mahasiswa Tidak Mengalami Depression")
+
+# ==========================================
+# FOOTER
+# ==========================================
+
+st.sidebar.write("---")
+st.sidebar.write("Project Machine Learning")
+st.sidebar.write("Student Mental Health Analysis")
