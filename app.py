@@ -1,41 +1,31 @@
-# ==========================================
-# STUDENT MENTAL HEALTH DASHBOARD
-# ==========================================
-
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
-# ==========================================
-# PAGE CONFIG (AGAR TERLIHAT PROFESIONAL)
-# ==========================================
+# ==============================
+# PAGE CONFIG
+# ==============================
 
 st.set_page_config(
-    page_title="Student Mental Health Dashboard",
+    page_title="Mental Health AI Dashboard",
     page_icon="🧠",
     layout="wide"
 )
 
-# ==========================================
-# TITLE
-# ==========================================
+st.title("🧠 Student Mental Health AI Dashboard")
+st.markdown("Dashboard analisis kesehatan mental mahasiswa menggunakan **Machine Learning**")
 
-st.title("🧠 Student Mental Health Dashboard")
-st.write("Dashboard Analisis dan Prediksi Kesehatan Mental Mahasiswa menggunakan Machine Learning")
+# ==============================
+# LOAD DATA
+# ==============================
 
-# ==========================================
-# LOAD DATASET
-# ==========================================
+df = pd.read_csv("student-mental-health.csv")
 
-df = pd.read_csv("Student Mental health (1).csv")
-
-# Rename kolom
 df.rename(columns={
     "Choose your gender": "gender",
     "Age": "age",
@@ -49,112 +39,125 @@ df.rename(columns={
     "Did you seek any specialist for a treatment?": "treatment"
 }, inplace=True)
 
-# Cleaning
 df = df.dropna()
 
-# Encoding
 df['depression'] = df['depression'].map({'Yes':1,'No':0})
 df['anxiety'] = df['anxiety'].map({'Yes':1,'No':0})
 df['panic_attack'] = df['panic_attack'].map({'Yes':1,'No':0})
 df['treatment'] = df['treatment'].map({'Yes':1,'No':0})
 
-# Feature engineering
-df["mental_health_score"] = df["depression"] + df["anxiety"] + df["panic_attack"]
+df["mental_score"] = df["depression"] + df["anxiety"] + df["panic_attack"]
 
-# ==========================================
-# SIDEBAR MENU
-# ==========================================
+# ==============================
+# SIDEBAR
+# ==============================
 
-menu = st.sidebar.selectbox(
-    "Menu",
-    ["Dashboard Data","Visualisasi Data","Machine Learning","Prediksi"]
+st.sidebar.title("Menu Dashboard")
+
+menu = st.sidebar.radio(
+    "Navigation",
+    ["Dashboard", "Visualisasi", "AI Prediction"]
 )
 
-# ==========================================
-# DASHBOARD DATA
-# ==========================================
+# ==============================
+# DASHBOARD
+# ==============================
 
-if menu == "Dashboard Data":
+if menu == "Dashboard":
 
-    st.header("📊 Dataset Overview")
+    st.subheader("📊 Statistik Dataset")
 
-    st.write("Jumlah Data:", df.shape)
+    col1, col2, col3, col4 = st.columns(4)
 
-    st.dataframe(df.head(10))
+    col1.metric("Total Data", len(df))
+    col2.metric("Depression Cases", df['depression'].sum())
+    col3.metric("Anxiety Cases", df['anxiety'].sum())
+    col4.metric("Panic Attack Cases", df['panic_attack'].sum())
 
-    st.subheader("Statistik Dataset")
+    st.divider()
 
-    st.write(df.describe())
+    col5, col6 = st.columns(2)
 
-# ==========================================
-# VISUALISASI DATA
-# ==========================================
+    with col5:
 
-elif menu == "Visualisasi Data":
+        gender_chart = px.histogram(
+            df,
+            x="gender",
+            title="Distribusi Gender",
+            color="gender"
+        )
 
-    st.header("📈 Visualisasi Data Mental Health")
+        st.plotly_chart(gender_chart, use_container_width=True)
+
+    with col6:
+
+        year_chart = px.histogram(
+            df,
+            x="year",
+            title="Distribusi Tahun Studi",
+            color="year"
+        )
+
+        st.plotly_chart(year_chart, use_container_width=True)
+
+# ==============================
+# VISUALISASI
+# ==============================
+
+elif menu == "Visualisasi":
+
+    st.subheader("📈 Analisis Kesehatan Mental")
 
     col1, col2 = st.columns(2)
 
     with col1:
 
-        st.subheader("Distribusi Gender")
+        dep_chart = px.pie(
+            df,
+            names="depression",
+            title="Depression Distribution"
+        )
 
-        fig1, ax1 = plt.subplots()
-
-        sns.countplot(x='gender', data=df, ax=ax1)
-
-        st.pyplot(fig1)
+        st.plotly_chart(dep_chart, use_container_width=True)
 
     with col2:
 
-        st.subheader("Mahasiswa Mengalami Depresi")
+        anx_chart = px.pie(
+            df,
+            names="anxiety",
+            title="Anxiety Distribution"
+        )
 
-        fig2, ax2 = plt.subplots()
+        st.plotly_chart(anx_chart, use_container_width=True)
 
-        sns.countplot(x='depression', data=df, ax=ax2)
+    panic_chart = px.histogram(
+        df,
+        x="mental_score",
+        title="Mental Health Score Distribution",
+        color="mental_score"
+    )
 
-        st.pyplot(fig2)
+    st.plotly_chart(panic_chart, use_container_width=True)
 
-    col3, col4 = st.columns(2)
+    cgpa_chart = px.scatter(
+        df,
+        x="age",
+        y="cgpa",
+        color="depression",
+        title="Age vs CGPA vs Depression"
+    )
 
-    with col3:
+    st.plotly_chart(cgpa_chart, use_container_width=True)
 
-        st.subheader("Mahasiswa Mengalami Anxiety")
-
-        fig3, ax3 = plt.subplots()
-
-        sns.countplot(x='anxiety', data=df, ax=ax3)
-
-        st.pyplot(fig3)
-
-    with col4:
-
-        st.subheader("Mahasiswa Mengalami Panic Attack")
-
-        fig4, ax4 = plt.subplots()
-
-        sns.countplot(x='panic_attack', data=df, ax=ax4)
-
-        st.pyplot(fig4)
-
-    st.subheader("Heatmap Korelasi")
-
-    fig5, ax5 = plt.subplots(figsize=(8,6))
-
-    sns.heatmap(df.corr(numeric_only=True), annot=True, cmap="coolwarm", ax=ax5)
-
-    st.pyplot(fig5)
-
-# ==========================================
+# ==============================
 # MACHINE LEARNING
-# ==========================================
+# ==============================
 
-elif menu == "Machine Learning":
+elif menu == "AI Prediction":
 
-    st.header("🤖 Machine Learning Model")
+    st.subheader("🤖 AI Prediction Panel")
 
-    X = df[['age','mental_health_score']]
+    X = df[['age','mental_score']]
     y = df['depression']
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -172,52 +175,31 @@ elif menu == "Machine Learning":
 
     accuracy = accuracy_score(y_test, y_pred)
 
-    st.subheader("Model Logistic Regression")
+    st.success(f"Model Accuracy : {round(accuracy*100,2)} %")
 
-    st.write("Model Accuracy:", round(accuracy*100,2), "%")
+    st.divider()
 
-# ==========================================
-# PREDIKSI
-# ==========================================
+    st.subheader("Input Data Mahasiswa")
 
-elif menu == "Prediksi":
-
-    st.header("🔮 Prediksi Depression Mahasiswa")
-
-    X = df[['age','mental_health_score']]
-    y = df['depression']
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.2,
-        random_state=42
-    )
-
-    model = LogisticRegression()
-
-    model.fit(X_train, y_train)
-
-    age = st.number_input("Masukkan Umur Mahasiswa", 17, 40)
-
+    age = st.slider("Age", 17, 40, 21)
     mental_score = st.slider("Mental Health Score", 0, 3)
 
-    if st.button("Prediksi"):
+    if st.button("Predict"):
 
-        prediction = model.predict([[age, mental_score]])
+        result = model.predict([[age, mental_score]])
 
-        if prediction[0] == 1:
+        if result[0] == 1:
 
-            st.error("⚠️ Mahasiswa Berisiko Mengalami Depression")
+            st.error("⚠️ Berisiko Mengalami Depression")
 
         else:
 
-            st.success("✅ Mahasiswa Tidak Mengalami Depression")
+            st.success("✅ Tidak Mengalami Depression")
 
-# ==========================================
+# ==============================
 # FOOTER
-# ==========================================
+# ==============================
 
-st.sidebar.write("---")
-st.sidebar.write("Project Machine Learning")
+st.sidebar.markdown("---")
+st.sidebar.write("Machine Learning Project")
 st.sidebar.write("Student Mental Health Analysis")
