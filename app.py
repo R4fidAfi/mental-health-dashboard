@@ -24,7 +24,7 @@ st.markdown("Dashboard analisis kesehatan mental mahasiswa menggunakan **Machine
 # LOAD DATA
 # ==============================
 
-df = pd.read_csv("student-mental-health.csv")
+df = pd.read_csv("Student Mental health (1).csv")
 
 df.rename(columns={
     "Choose your gender": "gender",
